@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper - Classic Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 2em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .difficulty-btn, .toggle-sound-btn {
+            padding: 10px 15px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .difficulty-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .difficulty-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toggle-sound-btn {
+            background: #4CAF50;
+            color: white;
+            width: auto;
+        }
+
+        .toggle-sound-btn:hover {
+            background: #45a049;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .board {
+            display: inline-grid;
+            gap: 2px;
+            background: #ccc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #ccc;
+            border: 2px outset #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.1s;
+            touch-action: manipulation;
+        }
+
+        .cell:active {
+            border-style: inset;
+        }
+
+        .cell.revealed {
+            background: #bdbdbd;
+            border: 1px solid #999;
+        }
+
+        .cell.flagged {
+            background: #ccc;
+            border: 2px outset #fff;
+        }
+
+        .cell.mine {
+            background: #ff5252;
+        }
+
+        .cell:nth-child(1n).number-1 {
+            color: blue;
+        }
+
+        .cell:nth-child(1n).number-2 {
+            color: green;
+        }
+
+        .cell:nth-child(1n).number-3 {
+            color: red;
+        }
+
+        .cell:nth-child(1n).number-4 {
+            color: darkblue;
+        }
+
+        .cell:nth-child(1n).number-5 {
+            color: darkred;
+        }
+
+        .cell:nth-child(1n).number-6 {
+            color: teal;
+        }
+
+        .cell:nth-child(1n).number-7 {
+            color: black;
+        }
+
+        .cell:nth-child(1n).number-8 {
+            color: gray;
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            height: 30px;
+        }
+
+        .game-status.win {
+            color: #4CAF50;
+        }
+
+        .game-status.lose {
+            color: #ff5252;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: celebration 1s ease-out forwards;
+        }
+
+        @keyframes celebration {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -150%) scale(1.5);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .difficulty-btn, .toggle-sound-btn {
+                width: 100%;
+            }
+        }
+
+        .combo-indicator {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #FFD700;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: pulse 0.3s ease-out;
+            z-index: 100;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .streak-effect {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Minesweeper</h1>
+        
+        <div class="controls">
+            <button class="difficulty-btn active" data-difficulty="easy">Easy (8x8, 10)</button>
+            <button class="difficulty-btn" data-difficulty="medium">Medium (12x12, 30)</button>
+            <button class="difficulty-btn" data-difficulty="hard">Hard (16x16, 99)</button>
+            <button class="toggle-sound-btn" id="soundToggle">🔊 Sound On</button>
+        </div>
+
+        <div class="game-status" id="gameStatus"></div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Mines</div>
+                <div class="stat-value" id="mineCount">10</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Time</div>
+                <div class="stat-value" id="timer">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Flags</div>
+                <div class="stat-value" id="flagCount">0</div>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div class="board" id="board"></div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">New Game</button>
+
+        <div class="instructions">
+            <strong>How to Play:</strong><br>
+            • <strong>Left Click:</strong> Reveal a cell<br>
+            • <strong>Right Click/Long Press:</strong> Place a flag<br>
+            • Reveal all non-mine cells to win<br>
+            • Flag all mines to see a surprise! 🎉
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration"></div>
+    <div class="combo-indicator" id="comboIndicator"></div>
+    <div class="streak-effect" id="streakEffect"></div>
+
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
